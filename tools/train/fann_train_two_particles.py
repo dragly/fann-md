@@ -46,8 +46,8 @@ ann.set_activation_function_output(libfann.SIGMOID_SYMMETRIC)
 train_data = libfann.training_data()
 test_data = libfann.training_data()
 
-train_data_filename = join(output_dir, "train.fann")
-test_data_filename = join(output_dir, "test.fann")
+train_data_filename = str(join(output_dir, "train.fann"))
+test_data_filename = str(join(output_dir, "test.fann"))
 print "Loading data:\n", train_data_filename, "\n", test_data_filename
 train_data.read_train_from_file(train_data_filename)
 test_data.read_train_from_file(test_data_filename)
@@ -57,7 +57,8 @@ best_result = inf
     #ann.cascadetrain_on_data(train_data, 1, 1, 1e-5)
 ann.train_on_data(train_data, 100000, 1000, 0.00001)
 
-ann.save(join(output_dir, "fann_network.net"))
+network_filename = str(join(output_dir, "fann_network.net"))
+ann.save(network_filename)
 
 train_data.destroy_train()
 test_data.destroy_train()
