@@ -38,10 +38,10 @@ ann = libfann.neural_net()
 
 #ann.create_shortcut_array((2,10,1))
 #ann.set_cascade_weight_multiplier(0.001)
-ann.create_standard_array((2,5,5,1))
+ann.create_standard_array((2,10,10,1))
 ann.set_training_algorithm(libfann.TRAIN_RPROP)
-ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)
-ann.set_activation_function_output(libfann.SIGMOID_SYMMETRIC)
+ann.set_activation_function_hidden(libfann.SIGMOID)
+ann.set_activation_function_output(libfann.SIGMOID)
 
 train_data = libfann.training_data()
 test_data = libfann.training_data()
@@ -63,3 +63,5 @@ ann.save(network_filename)
 train_data.destroy_train()
 test_data.destroy_train()
 ann.destroy()
+
+print "Network saved to:\n", network_filename
