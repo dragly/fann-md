@@ -55,7 +55,7 @@ test_data.read_train_from_file(test_data_filename)
 best_result = inf
 #for i in range(5):
     #ann.cascadetrain_on_data(train_data, 1, 1, 1e-5)
-ann.train_on_data(train_data, 100000, 1000, 0.00001)
+ann.train_on_data(train_data, 20000, 1000, 0.00001)
 
 network_filename = str(join(output_dir, "fann_network.net"))
 ann.save(network_filename)
