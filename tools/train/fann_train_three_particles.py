@@ -62,6 +62,9 @@ for network_count in range(10):
     ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)
     ann.set_activation_function_output(libfann.SIGMOID_SYMMETRIC)
     
+    
+    network_filename = str(join(output_dir, "fann_network_" + str(network_count) + ".net"))
+    networks.append(network_filename)
     network_pre_filename = str(join(output_dir, "fann_network_pre_" + str(network_count) + ".net"))
     best_result = inf
     for i in range(20):
@@ -71,14 +74,11 @@ for network_count in range(10):
         print "Validation: Best:", best_result, ", current:", validate_result
         if validate_result < best_result:
             best_result = validate_result
-            
+            ann.save(network_filename)
             ann.save(network_pre_filename)
         else:
             print "Validation: Early stopping!"
             break
-    
-    network_filename = str(join(output_dir, "fann_network_" + str(network_count) + ".net"))
-    networks.append(network_filename)
     for i in range(10):
         ann.cascadetrain_on_data(train_data, 1, 1, 1e-5)
         ann.reset_MSE()
