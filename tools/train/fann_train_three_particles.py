@@ -32,7 +32,7 @@ if len(states_files) == 1:
     states_files = glob(states_files[0])
 
 # Convert the files and move them to the build path
-convert_two_particle_hdf5_to_fann(states_files, output_dir, train_ratio=0.85)
+convert_three_particle_hdf5_to_fann(states_files, output_dir, train_ratio=0.85)
 
 # Load data
 train_data = libfann.training_data()
@@ -56,7 +56,7 @@ for network_count in range(10):
     
     ann.set_training_algorithm(libfann.TRAIN_RPROP)
     
-    ann.create_shortcut_array((2,10,1))
+    ann.create_shortcut_array((3,10,1))
     ann.set_cascade_weight_multiplier(0.001)
     #ann.create_standard_array((2,5,5,1))
     ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)
