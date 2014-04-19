@@ -2,16 +2,20 @@ import h5py
 import numpy
 from os.path import join
 from numpy import dtype, zeros, linspace, pi, cos, sin, arctan, arctan2, sqrt, meshgrid, array, inf
-from pylab import imshow, plot, figure, subplot, title
+from pylab import *
 from glob import glob
 from scipy.interpolate import griddata
 from collections import OrderedDict
 from sys import argv
 from random import shuffle
+from pyfann import libfann
 
 def rescale(value, value_min, value_max):
     #return value
     return (value - value_min) / (value_max - value_min) * 0.8 + 0.1
+
+def rescale_inverse(value, value_min, value_max):
+    return (value - 0.1) / 0.8 * (value_max - value_min) + value_min
 
 def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ratio=0.8):    
     if train_ratio >= 1.0 or train_ratio <= 0.0:
@@ -94,9 +98,38 @@ def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ra
     train_file.close()
     test_file.close()
     
-def convert_three_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ratio=0.8):
+def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_network_folder, r23_network_folder,  output_dir, n_max=inf, train_ratio=0.8):
     if train_ratio >= 1.0 or train_ratio <= 0.0:
         raise Exception("train_ratio must be in range [0.0, 1.0]. Got " + str(train_ratio))
+        
+    r12_network_filename = join(r12_network_folder, "fann_network.net")
+    r13_network_filename = join(r13_network_folder, "fann_network.net")
+    r23_network_filename = join(r23_network_folder, "fann_network.net")
+        
+    r12_network = libfann.neural_net()
+    r12_network.create_from_file(r12_network_filename)
+    r13_network = libfann.neural_net()
+    r13_network.create_from_file(r13_network_filename)
+    r23_network = libfann.neural_net()
+    r23_network.create_from_file(r23_network_filename)
+    
+    r12_bounds_data = loadtxt(join(r12_network_folder, "bounds.fann"), unpack=False)
+    r12_network_min = r12_bounds_data[1,0]
+    r12_network_max = r12_bounds_data[1,1]
+    r12_energy_min = r12_bounds_data[2,0]
+    r12_energy_max = r12_bounds_data[2,1]
+    
+    r13_bounds_data = loadtxt(join(r13_network_folder, "bounds.fann"), unpack=False)
+    r13_network_min = r13_bounds_data[1,0]
+    r13_network_max = r13_bounds_data[1,1]
+    r13_energy_min = r13_bounds_data[2,0]
+    r13_energy_max = r13_bounds_data[2,1]
+    
+    r23_bounds_data = loadtxt(join(r23_network_folder, "bounds.fann"), unpack=False)
+    r23_network_min = r23_bounds_data[1,0]
+    r23_network_max = r23_bounds_data[1,1]
+    r23_energy_min = r23_bounds_data[2,0]
+    r23_energy_max = r23_bounds_data[2,1]
         
     train_file = open(join(output_dir, "train.fann"), "w")
     validate_file = open(join(output_dir, "validate.fann"), "w")
@@ -133,7 +166,14 @@ def convert_three_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_
             atoms = states.get(stateName)
             energy_min = min(energy_min, atoms.attrs["energy"])
             energy_max = max(energy_max, atoms.attrs["energy"])
-            all_states.append([atoms.attrs["r12"], atoms.attrs["r13"], atoms.attrs["angle"], atoms.attrs["energy"]])
+
+            x = atoms[1][0] - atoms[2][0]
+            y = atoms[1][1] - atoms[2][1]            
+            z = atoms[1][2] - atoms[2][2]
+            
+            r23 = sqrt(x*x + y*y + z*z)
+            
+            all_states.append([atoms.attrs["r12"], atoms.attrs["r13"], atoms.attrs["angle"], r23, atoms.attrs["energy"]])
             
         f.close()
         
@@ -169,10 +209,20 @@ def convert_three_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_
             target_file = validate_file
             
         r12 = rescale(state[0], r12_min, r12_max)
-        r13 = rescale(state[1], r13_min, r13_max)
-        
+        r13 = rescale(state[1], r13_min, r13_max)        
         angle = rescale(state[2], angle_min, angle_max)
-        energy = rescale(state[3], energy_min, energy_max)
+        
+        r12_energy = r12_network.run([rescale(state[0], r12_network_min, r12_network_max)])[0]
+        r12_energy = rescale_inverse(r12_energy, r12_energy_min, r12_energy_max)
+        r13_energy = r13_network.run([rescale(state[1], r13_network_min, r13_network_max)])[0]
+        r13_energy = rescale_inverse(r13_energy, r13_energy_min, r13_energy_max)
+        r23_energy = r23_network.run([rescale(state[3], r23_network_min, r23_network_max)])[0]
+        r23_energy = rescale_inverse(r23_energy, r23_energy_min, r23_energy_max)
+
+        # TODO Fix this scaling
+        energy = state[4] - r12_energy - r13_energy - r23_energy
+        
+        energy = rescale(energy, energy_min, energy_max)
         
         target_file.write("%.10f %.10f %.10f\n\n" % (r12, r13, angle))
         target_file.write("%.10f\n\n" % (energy))
@@ -183,4 +233,8 @@ def convert_three_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_
         
     train_file.close()
     test_file.close()
+    
+    r12_network.destroy()
+    r13_network.destroy()
+    r23_network.destroy()
     
