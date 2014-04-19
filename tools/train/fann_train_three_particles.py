@@ -32,7 +32,7 @@ if len(states_files) == 1:
     states_files = glob(states_files[0])
 
 # Convert the files and move them to the build path
-convert_three_particle_hdf5_to_fann(states_files, output_dir, train_ratio=0.85)
+convert_three_particle_hdf5_to_fann(states_files, r12_states, r13_states, r23_states, output_dir, train_ratio=0.85)
 
 # Load data
 train_data = libfann.training_data()
