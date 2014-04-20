@@ -83,6 +83,8 @@ for network_count in range(10):
             best_result = validate_result
             ann.save(network_filename)
             ann.save(network_pre_filename)
+        elif validate_result < best_result*1.01:
+            print "Validation nearly bad..."
         else:
             print "Validation: Early stopping!"
             break
@@ -94,6 +96,8 @@ for network_count in range(10):
         if validate_result < best_result:
             best_result = validate_result
             ann.save(network_filename)
+        elif validate_result < best_result*1.01:
+            print "Validation nearly bad..."
         else:
             print "Validation: Early stopping!"
             break

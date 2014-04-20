@@ -180,6 +180,8 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
             
             energy_min = min(energy_min, atoms.attrs["energy"] - r12_energy - r13_energy - r23_energy)
             energy_max = max(energy_max, atoms.attrs["energy"] - r12_energy - r13_energy - r23_energy)
+            #energy_min = min(energy_min, atoms.attrs["energy"])
+            #energy_max = max(energy_max, atoms.attrs["energy"])
             
             all_states.append([atoms.attrs["r12"], atoms.attrs["r13"], atoms.attrs["angle"], r23, atoms.attrs["energy"]])
             
@@ -229,6 +231,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
 
         # TODO Fix this scaling
         energy = state[4] - r12_energy - r13_energy - r23_energy
+        #energy = state[4]
         
         energy = rescale(energy, energy_min, energy_max)
         
