@@ -15,7 +15,7 @@ parser.add_argument("states_files", nargs="+")
 parser.add_argument("--id", nargs='?', default="tmp")
 args = parser.parse_args()
 
-output_dir = abspath("tmp")
+output_dir = abspath("tmp/two")
 
 if args.id != "tmp":
     try:
@@ -56,7 +56,7 @@ for network_count in range(10):
     
     ann.set_training_algorithm(libfann.TRAIN_RPROP)
     
-    ann.create_shortcut_array((2,10,1))
+    ann.create_shortcut_array((2,4,1))
     ann.set_cascade_weight_multiplier(0.001)
     #ann.create_standard_array((2,5,5,1))
     ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)

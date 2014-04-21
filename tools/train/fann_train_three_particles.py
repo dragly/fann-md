@@ -12,9 +12,9 @@ setlocale(LC_ALL, "C") # Fixes problems loading fann network on systems with
 
 parser = argparse.ArgumentParser()
 parser.add_argument("states_files", nargs="+")
-parser.add_argument("--r12")
-parser.add_argument("--r13")
-parser.add_argument("--r23")
+parser.add_argument("--r12", required=True)
+parser.add_argument("--r13", required=True)
+parser.add_argument("--r23", required=True)
 parser.add_argument("--id", nargs='?', default="tmp")
 args = parser.parse_args()
 
@@ -22,7 +22,7 @@ r12_network = args.r12
 r13_network = args.r13
 r23_network = args.r23
 
-output_dir = abspath("tmp")
+output_dir = abspath("tmp/two")
 
 if args.id != "tmp":
     try:
