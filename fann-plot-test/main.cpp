@@ -21,7 +21,7 @@ void createTwoParticlePlots(const mat &bounds) {
 
     vec r12s = linspace(bounds(0,0), bounds(0,1), 200);
     struct fann *ann;
-    string inFileName = "../fann-trainer/fann_network0.net";
+    string inFileName = "/home/svenni/Dropbox/studies/master/results/fann_train/20140418-165800/fann_network.net";
 
     ann = fann_create_from_file(inFileName.c_str());
 
@@ -36,6 +36,7 @@ void createTwoParticlePlots(const mat &bounds) {
         output = fann_run(ann, input);
         double energy = output[0];
         energiesOutFile << r12 << " " << energy << " " << endl;
+        cout << r12 << " " << energy << endl;
     }
     energiesOutFile.close();
     fann_destroy(ann);
@@ -138,7 +139,7 @@ void createThreeParticlePlots(const mat &bounds) {
 int main()
 {
     // Read bounds
-    ifstream boundsFile("/home/svenni/Dropbox/projects/programming/fann-md/fann-md/tools/bounds.fann");
+    ifstream boundsFile("/home/svenni/Dropbox/studies/master/results/fann_train/20140418-165800/bounds.fann");
     int nInputs;
     boundsFile >> nInputs;
     cout << nInputs << endl;
