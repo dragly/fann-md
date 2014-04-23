@@ -22,7 +22,7 @@ r12_network = args.r12
 r13_network = args.r13
 r23_network = args.r23
 
-output_dir = abspath("tmp/two")
+output_dir = abspath("tmp/three")
 
 if args.id != "tmp":
     try:
