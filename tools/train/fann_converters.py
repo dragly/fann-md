@@ -42,13 +42,15 @@ def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ra
         atomsMeta = f.get("atomMeta")
         r12_min = atomsMeta.attrs["r12Min"]
         r12_max = atomsMeta.attrs["r12Max"]
+        energyOffset = atomsMeta.attrs["energyOffset"]
         states = f.get("/states")
         n_states_total += len(states)
         for stateName in states:
             atoms = states.get(stateName)
-            energy_min = min(energy_min, atoms.attrs["energy"])
-            energy_max = max(energy_max, atoms.attrs["energy"])
-            all_states.append([atoms.attrs["r12"], atoms.attrs["energy"]])
+            energy = atoms.attrs["energy"] - energyOffset
+            energy_min = min(energy_min, energy)
+            energy_max = max(energy_max, energy)
+            all_states.append([atoms.attrs["r12"], energy])
             
         f.close()
     n_states_total = min(n_states_total, n_max)
@@ -154,6 +156,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
     for statesFile in filenames:
         f = h5py.File(statesFile, "r")
         atomsMeta = f.get("atomMeta")
+        energy_offset = atomsMeta.attrs["energyOffset"] # energy of the system with atoms infinitely far away from each other
         r12_min = atomsMeta.attrs["r12Min"]
         r12_max = atomsMeta.attrs["r12Max"]
         r13_min = atomsMeta.attrs["r13Min"]
@@ -164,6 +167,8 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
         n_states_total += len(states)
         for stateName in states:
             atoms = states.get(stateName)
+            
+            energy = atoms.attrs["energy"] - energy_offset
 
             x = atoms[1][0] - atoms[2][0]
             y = atoms[1][1] - atoms[2][1]            
@@ -178,9 +183,8 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
             r23_energy = r23_network.run([rescale(r23, r23_network_min, r23_network_max)])[0]
             r23_energy = rescale_inverse(r23_energy, r23_energy_min, r23_energy_max)
             
-            energy_min = min(energy_min, atoms.attrs["energy"] - r12_energy - r13_energy - r23_energy)
-            energy_max = max(energy_max, atoms.attrs["energy"] - r12_energy - r13_energy - r23_energy)
-            print atoms.attrs["energy"], r12_energy, r13_energy, r23_energy
+            energy_min = min(energy_min, energy - r12_energy - r13_energy - r23_energy)
+            energy_max = max(energy_max, energy - r12_energy - r13_energy - r23_energy)
             #energy_min = min(energy_min, atoms.attrs["energy"])
             #energy_max = max(energy_max, atoms.attrs["energy"])
             

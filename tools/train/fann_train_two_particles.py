@@ -50,8 +50,9 @@ validate_data.read_train_from_file(validate_data_filename)
 test_data.read_train_from_file(test_data_filename)
 
 # Create and train networks
+best_test_result = inf
 networks = []
-for network_count in range(10):
+for network_count in range(20):
     ann = libfann.neural_net()
     
     ann.set_training_algorithm(libfann.TRAIN_RPROP)
@@ -90,18 +91,12 @@ for network_count in range(10):
         else:
             print "Validation: Early stopping!"
             break
-    ann.destroy()
-
-# Network comparison
-best_test_result = inf
-for network_filename in networks:
-    ann = libfann.neural_net()
-    ann.create_from_file(network_filename)
-    ann.reset_MSE()
+        
+    #Test and compare network with others
+    ann.reset_MSE()    
     test_result = ann.test_data(test_data)
-    print "Final results for network", network_filename, ":\n", test_result
     if test_result < best_test_result:
-        print "Currently the best. Saving..."
+        print "Currently the best. Saving to final file..."
         best_test_result = test_result
         network_filename_final = str(join(output_dir, "fann_network.net"))
         ann.save(network_filename_final)
