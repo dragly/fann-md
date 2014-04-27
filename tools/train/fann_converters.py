@@ -180,6 +180,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
             
             energy_min = min(energy_min, atoms.attrs["energy"] - r12_energy - r13_energy - r23_energy)
             energy_max = max(energy_max, atoms.attrs["energy"] - r12_energy - r13_energy - r23_energy)
+            print atoms.attrs["energy"], r12_energy, r13_energy, r23_energy
             #energy_min = min(energy_min, atoms.attrs["energy"])
             #energy_max = max(energy_max, atoms.attrs["energy"])
             
@@ -193,6 +194,9 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
     bounds_file.write("%.16e %.16e\n" % (r12_min, r12_max))
     bounds_file.write("%.16e %.16e\n" % (r13_min, r13_max))
     bounds_file.write("%.16e %.16e\n" % (angle_min, angle_max))
+
+    print "energy_min: ", energy_min, " energy_max: ", energy_max
+    
     bounds_file.write("%.16e %.16e\n" % (energy_min, energy_max))
     
     bounds_file.close()

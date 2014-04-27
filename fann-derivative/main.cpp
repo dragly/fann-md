@@ -24,11 +24,13 @@ fann_type fann_activation_derived2(unsigned int activation_function,
     case FANN_LINEAR_PIECE_SYMMETRIC:
         return (fann_type) fann_linear_derive(steepness, value);
     case FANN_SIGMOID:
-    case FANN_SIGMOID_STEPWISE:
         return (fann_type) fann_sigmoid_derive(steepness, value);
+    case FANN_SIGMOID_STEPWISE:
+        fann_error(NULL, FANN_E_CANT_TRAIN_ACTIVATION);
     case FANN_SIGMOID_SYMMETRIC:
-    case FANN_SIGMOID_SYMMETRIC_STEPWISE:
         return (fann_type) fann_sigmoid_symmetric_derive(steepness, value);
+    case FANN_SIGMOID_SYMMETRIC_STEPWISE:
+        fann_error(NULL, FANN_E_CANT_TRAIN_ACTIVATION);
     case FANN_GAUSSIAN:
         return (fann_type) fann_gaussian_derive(steepness, value, sum/steepness);
     case FANN_GAUSSIAN_SYMMETRIC:
@@ -161,51 +163,56 @@ int main()
             default:
                 break;
             }
-            fann_set_activation_function(ann, FANN_SIGMOID_SYMMETRIC, layer_number, neuron_number);
             neuron_number++;
         }
         layer_number++;
     }
 
     fann_type input[1];
-    fann_type value = 0.5;
+    fann_type value = 0.15;
     input[0] = value;
 
     fann_type* output = fann_run(ann, input);
 
     cout << "Output for " << value << ": " << output[0] << endl;
-
-    // Numerical derivative
-    fann_type h = 1e-8;
-    input[0] = value + h;
-    fann_type outputPlus = fann_run(ann, input)[0];
-    input[0] = value - h;
-    fann_type outputMinus = fann_run(ann, input)[0];
-    fann_type derivative = (outputPlus - outputMinus) / (2*h);
-
-    input[0] = value;
-    output = fann_run(ann, input);
+    clock_t begin_time = clock();
+    fann_type derivative = 0;
+    for(int i = 0; i < 5000000; i++) {
+        // Numerical derivative
+        fann_type h = 1e-8;
+        input[0] = value + h;
+        fann_type outputPlus = fann_run(ann, input)[0];
+        input[0] = value - h;
+        fann_type outputMinus = fann_run(ann, input)[0];
+        derivative = (outputPlus - outputMinus) / (2*h);
+    }
+    cout << "Numerical deriv.: " << derivative << endl;
+    std::cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
 
     // Backpropagated derivative
     fann_type desiredOutput[1];
     desiredOutput[0] = 0.0;
     fann_compute_MSE(ann, desiredOutput);
 
-    fann_type *error_begin = ann->train_errors;
-    fann_neuron *last_layer_begin = (ann->last_layer - 1)->first_neuron;
-    const struct fann_neuron *first_neuron = ann->first_layer->first_neuron;
-    fann_type *error_it = error_begin + (last_layer_begin - first_neuron);
-    cout << "Output for x: " << last_layer_begin->value << endl;
-    cout << "Numerical deriv.: " << derivative << endl;
 
-    error_it[0] = fann_activation_derived2(last_layer_begin->activation_function,
-                                           last_layer_begin->activation_steepness,
-                                           last_layer_begin->value,
-                                           last_layer_begin->sum);
+    begin_time = clock();
+    for(int i = 0; i < 5000000; i++) {
+        input[0] = value;
+        output = fann_run(ann, input);
+        fann_type *error_begin = ann->train_errors;
+        fann_neuron *last_layer_begin = (ann->last_layer - 1)->first_neuron;
+        const struct fann_neuron *first_neuron = ann->first_layer->first_neuron;
+        fann_type *error_it = error_begin + (last_layer_begin - first_neuron);
+        error_it[0] = fann_activation_derived2(last_layer_begin->activation_function,
+                                               last_layer_begin->activation_steepness,
+                                               last_layer_begin->value,
+                                               last_layer_begin->sum);
 
-    fann_backpropagate_derivative(ann);
+        fann_backpropagate_derivative(ann);
+    }
 
     cout << "Final derivative: " << ann->train_errors[0] << endl;
+    std::cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
 
     fann_destroy(ann);
     return 0;
