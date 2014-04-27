@@ -167,8 +167,6 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
         n_states_total += len(states)
         for stateName in states:
             atoms = states.get(stateName)
-            
-            energy = atoms.attrs["energy"] - energy_offset
 
             x = atoms[1][0] - atoms[2][0]
             y = atoms[1][1] - atoms[2][1]            
@@ -183,12 +181,14 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
             r23_energy = r23_network.run([rescale(r23, r23_network_min, r23_network_max)])[0]
             r23_energy = rescale_inverse(r23_energy, r23_energy_min, r23_energy_max)
             
-            energy_min = min(energy_min, energy - r12_energy - r13_energy - r23_energy)
-            energy_max = max(energy_max, energy - r12_energy - r13_energy - r23_energy)
+            energy = atoms.attrs["energy"] - energy_offset - r12_energy - r13_energy - r23_energy
+            
+            energy_min = min(energy_min, energy)
+            energy_max = max(energy_max, energy)
             #energy_min = min(energy_min, atoms.attrs["energy"])
             #energy_max = max(energy_max, atoms.attrs["energy"])
             
-            all_states.append([atoms.attrs["r12"], atoms.attrs["r13"], atoms.attrs["angle"], r23, atoms.attrs["energy"]])
+            all_states.append([atoms.attrs["r12"], atoms.attrs["r13"], atoms.attrs["angle"], r23, energy])
             
         f.close()
         
@@ -230,15 +230,15 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
         r13 = rescale(state[1], r13_min, r13_max)        
         angle = rescale(state[2], angle_min, angle_max)
         
-        r12_energy = r12_network.run([rescale(state[0], r12_network_min, r12_network_max)])[0]
-        r12_energy = rescale_inverse(r12_energy, r12_energy_min, r12_energy_max)
-        r13_energy = r13_network.run([rescale(state[1], r13_network_min, r13_network_max)])[0]
-        r13_energy = rescale_inverse(r13_energy, r13_energy_min, r13_energy_max)
-        r23_energy = r23_network.run([rescale(state[3], r23_network_min, r23_network_max)])[0]
-        r23_energy = rescale_inverse(r23_energy, r23_energy_min, r23_energy_max)
+#        r12_energy = r12_network.run([rescale(state[0], r12_network_min, r12_network_max)])[0]
+#        r12_energy = rescale_inverse(r12_energy, r12_energy_min, r12_energy_max)
+#        r13_energy = r13_network.run([rescale(state[1], r13_network_min, r13_network_max)])[0]
+#        r13_energy = rescale_inverse(r13_energy, r13_energy_min, r13_energy_max)
+#        r23_energy = r23_network.run([rescale(state[3], r23_network_min, r23_network_max)])[0]
+#        r23_energy = rescale_inverse(r23_energy, r23_energy_min, r23_energy_max)
 
         # TODO Fix this scaling
-        energy = state[4] - r12_energy - r13_energy - r23_energy
+        energy = state[4]
         #energy = state[4]
         
         energy = rescale(energy, energy_min, energy_max)
