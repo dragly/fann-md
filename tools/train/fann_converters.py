@@ -182,7 +182,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
             r23_energy = rescale_inverse(r23_energy, r23_energy_min, r23_energy_max)
             
             # 1/3 because this potential will be counted 3 times in MD for each trio of particles
-            energy = 1.0/3.0 * (atoms.attrs["energy"] - energy_offset) - r12_energy - r13_energy - r23_energy
+            energy = 1.0/3.0 * (atoms.attrs["energy"] - energy_offset - r12_energy - r13_energy - r23_energy)
             
             energy_min = min(energy_min, energy)
             energy_max = max(energy_max, energy)
