@@ -66,7 +66,7 @@ for network_count in range(15):
     network_pre_filename = str(join(output_dir, "fann_network_pre_" + str(network_count) + ".net"))
     best_result = inf
     for i in range(20):
-        ann.train_on_data(train_data, 500, 500, 0.000001)
+        ann.train_on_data(train_data, 500, 500, 0.00000001)
         ann.reset_MSE()
         validate_result = ann.test_data(validate_data)
         print "Validation: Best:", best_result, ", current:", validate_result
