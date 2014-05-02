@@ -58,7 +58,7 @@ for network_count in range(15):
     ann.set_training_algorithm(libfann.TRAIN_RPROP)
     
     #ann.create_shortcut_array((2,5,5,1))
-    ann.create_standard_array((2,10,1))
+    ann.create_standard_array((2,5,5,1))
     ann.set_cascade_weight_multiplier(0.001)
     #ann.create_standard_array((2,5,5,1))
     ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)
