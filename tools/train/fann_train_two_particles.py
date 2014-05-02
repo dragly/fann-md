@@ -57,26 +57,26 @@ for network_count in range(15):
     
     ann.set_training_algorithm(libfann.TRAIN_INCREMENTAL)
     
-    ann.create_shortcut_array((1,5,5,1))
+    ann.create_shortcut_array((1,1))
     ann.set_cascade_weight_multiplier(0.001)
     #ann.create_standard_array((2,5,5,1))
     ann.set_activation_function_hidden(libfann.GAUSSIAN)
     ann.set_activation_function_output(libfann.LINEAR)
     
-    network_pre_filename = str(join(output_dir, "fann_network_pre_" + str(network_count) + ".net"))
+#    network_pre_filename = str(join(output_dir, "fann_network_pre_" + str(network_count) + ".net"))
     best_result = inf
-    for i in range(20):
-        ann.train_on_data(train_data, 500, 500, 0.00000001)
-        ann.reset_MSE()
-        validate_result = ann.test_data(validate_data)
-        print "Validation: Best:", best_result, ", current:", validate_result
-        if validate_result < best_result:
-            best_result = validate_result
-            
-            ann.save(network_pre_filename)
-        else:
-            print "Validation: Early stopping!"
-            break
+#    for i in range(20):
+#        ann.train_on_data(train_data, 500, 500, 0.00000001)
+#        ann.reset_MSE()
+#        validate_result = ann.test_data(validate_data)
+#        print "Validation: Best:", best_result, ", current:", validate_result
+#        if validate_result < best_result:
+#            best_result = validate_result
+#            
+#            ann.save(network_pre_filename)
+#        else:
+#            print "Validation: Early stopping!"
+#            break
     
     network_filename = str(join(output_dir, "fann_network_" + str(network_count) + ".net"))
     networks.append(network_filename)
