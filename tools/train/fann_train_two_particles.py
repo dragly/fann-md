@@ -52,16 +52,16 @@ test_data.read_train_from_file(test_data_filename)
 # Create and train networks
 best_test_result = inf
 networks = []
-for network_count in range(30):
+for network_count in range(15):
     ann = libfann.neural_net()
     
     ann.set_training_algorithm(libfann.TRAIN_RPROP)
     
-    ann.create_shortcut_array((2,4,1))
+    ann.create_shortcut_array((2,10,1))
     ann.set_cascade_weight_multiplier(0.001)
     #ann.create_standard_array((2,5,5,1))
-    #ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)
-    #ann.set_activation_function_output(libfann.SIGMOID_SYMMETRIC)
+    ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)
+    ann.set_activation_function_output(libfann.SIGMOID_SYMMETRIC)
     
     network_pre_filename = str(join(output_dir, "fann_network_pre_" + str(network_count) + ".net"))
     best_result = inf
