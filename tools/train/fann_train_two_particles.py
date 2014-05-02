@@ -106,4 +106,6 @@ train_data.destroy_train()
 validate_data.destroy_train()
 test_data.destroy_train()
 
+print "Lowest validation error was:\n", best_result
+print "Lowest test error was:\n", best_test_result
 print "Network saved to:\n", network_filename_final
