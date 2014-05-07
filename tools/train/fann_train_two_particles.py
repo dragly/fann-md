@@ -65,7 +65,7 @@ for network_count in range(15):
     ann.create_shortcut_array((1,8,8,1))
     ann.set_cascade_weight_multiplier(0.001)
     #ann.create_standard_array((2,5,5,1))
-    ann.set_activation_function_hidden(libfann.GAUSSIAN_SYMMETRIC)
+    ann.set_activation_function_hidden(libfann.GAUSSIAN)
     ann.set_activation_function_output(libfann.LINEAR)
     
     network_pre_filename = str(join(output_dir, "fann_network_pre_" + str(network_count) + ".net"))
