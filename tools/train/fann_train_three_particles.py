@@ -11,16 +11,13 @@ setlocale(LC_ALL, "C") # Fixes problems loading fann network on systems with
                        # locales using "," as the punctuation character
 
 parser = argparse.ArgumentParser()
-parser.add_argument("states_files", nargs="+")
-parser.add_argument("--r12", required=True)
-parser.add_argument("--r13", required=True)
-parser.add_argument("--r23", required=True)
+parser.add_argument("--three_body_states", nargs="+")
+parser.add_argument("--r12_states", nargs="+")
+parser.add_argument("--r13_states", nargs="+")
+parser.add_argument("--r23_states", nargs="+")
+parser.add_argument("--fast", action="store_true")
 parser.add_argument("--id", nargs='?', default="tmp")
 args = parser.parse_args()
-
-r12_network = args.r12
-r13_network = args.r13
-r23_network = args.r23
 
 output_dir = abspath("tmp/three")
 
@@ -34,12 +31,12 @@ if args.id != "tmp":
 if not exists(output_dir):
     os.makedirs(output_dir)
 
-states_files = args.states_files
-if len(states_files) == 1:
-    states_files = glob(states_files[0])
-
 # Convert the files and move them to the build path
-convert_three_particle_hdf5_to_fann(states_files, r12_network, r13_network, r23_network, output_dir, train_ratio=0.85)
+if args.fast:
+    n_max = 200
+else:
+    n_max = inf
+convert_three_particle_hdf5_to_fann(args.three_body_states, args.r12_states, args.r13_states, args.r23_states, output_dir, train_ratio=0.85, n_max=n_max)
 
 # Load data
 train_data = libfann.training_data()
@@ -61,13 +58,13 @@ networks = []
 for network_count in range(10):
     ann = libfann.neural_net()
     
-    ann.set_training_algorithm(libfann.TRAIN_RPROP)
+    ann.set_training_algorithm(libfann.TRAIN_INCREMENTAL)
     
-    ann.create_shortcut_array((3,10,1))
+    ann.create_shortcut_array((3,8,8,1))
     ann.set_cascade_weight_multiplier(0.001)
     #ann.create_standard_array((2,5,5,1))
-    ann.set_activation_function_hidden(libfann.SIGMOID_SYMMETRIC)
-    ann.set_activation_function_output(libfann.SIGMOID_SYMMETRIC)
+    ann.set_activation_function_hidden(libfann.GAUSSIAN)
+    ann.set_activation_function_output(libfann.LINEAR)
     
     
     network_filename = str(join(output_dir, "fann_network_" + str(network_count) + ".net"))
@@ -75,7 +72,7 @@ for network_count in range(10):
     network_pre_filename = str(join(output_dir, "fann_network_pre_" + str(network_count) + ".net"))
     best_result = inf
     for i in range(20):
-        ann.train_on_data(train_data, 500, 500, 0.00001)
+        ann.train_on_data(train_data, 2000, 500, 0.00001)
         ann.reset_MSE()
         validate_result = ann.test_data(validate_data)
         print "Validation: Best:", best_result, ", current:", validate_result

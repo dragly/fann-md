@@ -9,6 +9,11 @@ from collections import OrderedDict
 from sys import argv
 from random import shuffle
 from pyfann import libfann
+from glob import glob
+
+def find_nearest_index(array, value):
+    idx = (np.abs(array-value)).argmin()
+    return idx
 
 def rescale(value, value_min, value_max):
     #return value
@@ -100,38 +105,59 @@ def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ra
     train_file.close()
     test_file.close()
     
-def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_network_folder, r23_network_folder,  output_dir, n_max=inf, train_ratio=0.8):
+def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames, r23_filenames,  output_dir, n_max=inf, train_ratio=0.8):
+    
+    if len(filenames) == 1:
+        filenames = glob(filenames[0])
+        
+    if len(r12_filenames) == 1:
+        r12_filenames = glob(r12_filenames[0])
+        
+    if len(r13_filenames) == 1:
+        r13_filenames = glob(r13_filenames[0])
+        
+    if len(r23_filenames) == 1:
+        r23_filenames = glob(r23_filenames[0])  
+    
     if train_ratio >= 1.0 or train_ratio <= 0.0:
         raise Exception("train_ratio must be in range [0.0, 1.0]. Got " + str(train_ratio))
         
-    r12_network_filename = join(r12_network_folder, "fann_network.net")
-    r13_network_filename = join(r13_network_folder, "fann_network.net")
-    r23_network_filename = join(r23_network_folder, "fann_network.net")
-        
-    r12_network = libfann.neural_net()
-    r12_network.create_from_file(r12_network_filename)
-    r13_network = libfann.neural_net()
-    r13_network.create_from_file(r13_network_filename)
-    r23_network = libfann.neural_net()
-    r23_network.create_from_file(r23_network_filename)
+    r12_energies = []
+    r12_r12s = []
+    r13_energies = []
+    r13_r12s = []
+    r23_energies = []
+    r23_r12s = []
     
-    r12_bounds_data = loadtxt(join(r12_network_folder, "bounds.fann"), unpack=False)
-    r12_network_min = r12_bounds_data[1,0]
-    r12_network_max = r12_bounds_data[1,1]
-    r12_energy_min = r12_bounds_data[2,0]
-    r12_energy_max = r12_bounds_data[2,1]
-    
-    r13_bounds_data = loadtxt(join(r13_network_folder, "bounds.fann"), unpack=False)
-    r13_network_min = r13_bounds_data[1,0]
-    r13_network_max = r13_bounds_data[1,1]
-    r13_energy_min = r13_bounds_data[2,0]
-    r13_energy_max = r13_bounds_data[2,1]
-    
-    r23_bounds_data = loadtxt(join(r23_network_folder, "bounds.fann"), unpack=False)
-    r23_network_min = r23_bounds_data[1,0]
-    r23_network_max = r23_bounds_data[1,1]
-    r23_energy_min = r23_bounds_data[2,0]
-    r23_energy_max = r23_bounds_data[2,1]
+    for i in range(3):
+        if i == 0:
+            states_files = r12_filenames
+            r12s = r12_r12s
+            energies = r12_energies
+        elif i == 1:
+            states_files = r13_filenames
+            r12s = r13_r12s
+            energies = r13_energies
+        elif i == 2:
+            states_files = r23_filenames
+            r12s = r23_r12s
+            energies = r23_energies
+            
+        for statesFile in states_files:
+            f = h5py.File(statesFile, "r")
+            atomsMeta = f.get("atomMeta")
+            energyOffset = atomsMeta.attrs["energyOffset"]
+            if len(atomsMeta) != 2:
+                raise Exception("Wrong number of atoms in atomsMeta. Found %d, should be 2." % len(atomsMeta))
+            states = f.get("/states")
+            for stateName in states:
+                atoms = states.get(stateName)
+                r12 = atoms.attrs["r12"]
+                energy = atoms.attrs["energy"] - energyOffset
+                
+                r12s.append(r12)
+                energies.append(energy)                
+            f.close()
         
     train_file = open(join(output_dir, "train.fann"), "w")
     validate_file = open(join(output_dir, "validate.fann"), "w")
@@ -167,6 +193,9 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
         n_states_total += len(states)
         for stateName in states:
             atoms = states.get(stateName)
+            
+            r12 = atoms.attrs["r12"]
+            r13 = atoms.attrs["r13"]
 
             x = atoms[1][0] - atoms[2][0]
             y = atoms[1][1] - atoms[2][1]            
@@ -174,12 +203,13 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
             
             r23 = sqrt(x*x + y*y + z*z)
         
-            r12_energy = r12_network.run([rescale(atoms.attrs["r12"], r12_network_min, r12_network_max)])[0]
-            r12_energy = rescale_inverse(r12_energy, r12_energy_min, r12_energy_max)
-            r13_energy = r13_network.run([rescale(atoms.attrs["r13"], r13_network_min, r13_network_max)])[0]
-            r13_energy = rescale_inverse(r13_energy, r13_energy_min, r13_energy_max)
-            r23_energy = r23_network.run([rescale(r23, r23_network_min, r23_network_max)])[0]
-            r23_energy = rescale_inverse(r23_energy, r23_energy_min, r23_energy_max)
+            index12 = find_nearest_index(r12_r12s, r12)
+            index13 = find_nearest_index(r13_r12s, r13)
+            index23 = find_nearest_index(r23_r12s, r23)
+        
+            r12_energy = r12_energies[index12]
+            r13_energy = r13_energies[index13]
+            r23_energy = r23_energies[index23]
             
             energy = (atoms.attrs["energy"] - energy_offset - r12_energy - r13_energy - r23_energy)
             
@@ -252,8 +282,4 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_network_folder, r13_netwo
         
     train_file.close()
     test_file.close()
-    
-    r12_network.destroy()
-    r13_network.destroy()
-    r23_network.destroy()
     
