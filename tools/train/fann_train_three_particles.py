@@ -58,7 +58,7 @@ networks = []
 for network_count in range(10):
     ann = libfann.neural_net()
     
-    ann.set_training_algorithm(libfann.TRAIN_INCREMENTAL)
+    ann.set_training_algorithm(libfann.TRAIN_RPROP)
     
     ann.create_shortcut_array((3,8,8,1))
     ann.set_cascade_weight_multiplier(0.001)
