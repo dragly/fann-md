@@ -105,7 +105,7 @@ def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ra
     train_file.close()
     test_file.close()
     
-def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames, r23_filenames,  output_dir, n_max=inf, train_ratio=0.8):
+def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames, r23_filenames,  output_dir, n_max=inf, train_ratio=0.8, min_distance=0.0):
     
     if len(filenames) == 1:
         filenames = glob(filenames[0])
@@ -179,6 +179,8 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames,
     
     all_states = []
     
+    print "min_distance:", min_distance
+    
     for statesFile in filenames:
         f = h5py.File(statesFile, "r")
         atomsMeta = f.get("atomMeta")
@@ -190,13 +192,16 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames,
         angle_min = atomsMeta.attrs["angleMin"]
         angle_max = atomsMeta.attrs["angleMax"]
         states = f.get("/states")
-        n_states_total += len(states)
         for stateName in states:
             atoms = states.get(stateName)
             
             r12 = atoms.attrs["r12"]
             r13 = atoms.attrs["r13"]
-
+            angle = atoms.attrs["angle"]
+            
+            if r12 < min_distance and r13 < min_distance:
+                continue
+            
             x = atoms[1][0] - atoms[2][0]
             y = atoms[1][1] - atoms[2][1]            
             z = atoms[1][2] - atoms[2][2]
@@ -218,11 +223,11 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames,
             #energy_min = min(energy_min, atoms.attrs["energy"])
             #energy_max = max(energy_max, atoms.attrs["energy"])
             
-            all_states.append([atoms.attrs["r12"], atoms.attrs["r13"], atoms.attrs["angle"], r23, energy])
+            all_states.append([r12, r13, angle, r23, energy])
             
         f.close()
         
-    n_states_total = min(n_states_total, n_max)
+    n_states_total = min(len(all_states), n_max)
     
     bounds_file.write("%d %d\n" % (n_parameters, n_outputs))
     bounds_file.write("%.16e %.16e\n" % (r12_min, r12_max))
