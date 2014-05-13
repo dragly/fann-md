@@ -34,7 +34,7 @@ if not exists(output_dir):
 
 # Convert the files and move them to the build path
 if args.fast:
-    n_max = 400
+    n_max = 1000
 else:
     n_max = inf
 convert_three_particle_hdf5_to_fann(args.three_body_states, 

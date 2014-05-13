@@ -22,7 +22,7 @@ def rescale(value, value_min, value_max):
 def rescale_inverse(value, value_min, value_max):
     return (value - 0.1) / 0.8 * (value_max - value_min) + value_min
 
-def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ratio=0.8):    
+def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ratio=0.8, min_distance=0.0):    
     if train_ratio >= 1.0 or train_ratio <= 0.0:
         raise Exception("train_ratio must be in range [0.0, 1.0]. Got " + str(train_ratio))
     
@@ -49,16 +49,18 @@ def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ra
         r12_max = atomsMeta.attrs["r12Max"]
         energyOffset = atomsMeta.attrs["energyOffset"]
         states = f.get("/states")
-        n_states_total += len(states)
         for stateName in states:
             atoms = states.get(stateName)
+            r12 = atoms.attrs["r12"]
+            if r12 < min_distance:
+                continue
             energy = atoms.attrs["energy"] - energyOffset
             energy_min = min(energy_min, energy)
             energy_max = max(energy_max, energy)
-            all_states.append([atoms.attrs["r12"], energy])
+            all_states.append([r12, energy])
             
         f.close()
-    n_states_total = min(n_states_total, n_max)
+    n_states_total = min(len(all_states), n_max)
     
     bounds_file.write("%d %d\n" % (n_parameters, n_outputs))
     bounds_file.write("%.16e %.16e\n" % (r12_min, r12_max))
@@ -143,6 +145,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames,
             r12s = r23_r12s
             energies = r23_energies
             
+        print "Reading", len(states_files), "state files"
         for statesFile in states_files:
             f = h5py.File(statesFile, "r")
             atomsMeta = f.get("atomMeta")
@@ -150,6 +153,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames,
             if len(atomsMeta) != 2:
                 raise Exception("Wrong number of atoms in atomsMeta. Found %d, should be 2." % len(atomsMeta))
             states = f.get("/states")
+            print "Reading", len(states), "states..."
             for stateName in states:
                 atoms = states.get(stateName)
                 r12 = atoms.attrs["r12"]
@@ -179,8 +183,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames,
     
     all_states = []
     
-    print "min_distance:", min_distance
-    
+    print "Reading", len(filenames), "state files"
     for statesFile in filenames:
         f = h5py.File(statesFile, "r")
         atomsMeta = f.get("atomMeta")
@@ -192,6 +195,7 @@ def convert_three_particle_hdf5_to_fann(filenames, r12_filenames, r13_filenames,
         angle_min = atomsMeta.attrs["angleMin"]
         angle_max = atomsMeta.attrs["angleMax"]
         states = f.get("/states")
+        print "Reading", len(states), "states..."
         for stateName in states:
             atoms = states.get(stateName)
             
