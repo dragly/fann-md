@@ -52,7 +52,7 @@ def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ra
         for stateName in states:
             atoms = states.get(stateName)
             r12 = atoms.attrs["r12"]
-            if r12 < min_distance:
+            if r12 < r12_min or r12 > r12_max:
                 continue
             energy = atoms.attrs["energy"] - energyOffset
             energy_min = min(energy_min, energy)
