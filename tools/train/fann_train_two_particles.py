@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("states_files", nargs="+")
 parser.add_argument("--fast", action="store_true")
 parser.add_argument("--min_distance", default=0.0, type=float)
+parser.add_argument("--max_distance", default=inf, type=float)
 parser.add_argument("--id", nargs='?', default="tmp")
 args = parser.parse_args()
 
@@ -38,7 +39,7 @@ if args.fast:
     n_max = 200
 else:
     n_max = inf
-convert_two_particle_hdf5_to_fann(states_files, output_dir, train_ratio=0.85, n_max=n_max, min_distance=args.min_distance)
+convert_two_particle_hdf5_to_fann(states_files, output_dir, train_ratio=0.85, n_max=n_max, min_distance=args.min_distance, max_distance=args.max_distance)
 
 # Load data
 train_data = libfann.training_data()

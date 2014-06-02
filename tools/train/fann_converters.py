@@ -22,7 +22,7 @@ def rescale(value, value_min, value_max):
 def rescale_inverse(value, value_min, value_max):
     return (value - 0.1) / 0.8 * (value_max - value_min) + value_min
 
-def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ratio=0.8, min_distance=0.0):    
+def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ratio=0.8, min_distance=0.0, max_distance=inf):    
     if train_ratio >= 1.0 or train_ratio <= 0.0:
         raise Exception("train_ratio must be in range [0.0, 1.0]. Got " + str(train_ratio))
     
@@ -37,16 +37,16 @@ def convert_two_particle_hdf5_to_fann(filenames, output_dir, n_max=inf, train_ra
     
     energy_min = inf
     energy_max = -inf
-    r12_min = inf
-    r12_max = -inf
+    r12_min = min_distance
+    r12_max = max_distance
     
     all_states = []
     
     for statesFile in filenames:
         f = h5py.File(statesFile, "r")
         atomsMeta = f.get("atomMeta")
-        r12_min = atomsMeta.attrs["r12Min"]
-        r12_max = atomsMeta.attrs["r12Max"]
+        r12_min = max(r12_min, atomsMeta.attrs["r12Min"])
+        r12_max = min(r12_max, atomsMeta.attrs["r12Max"])
         energyOffset = atomsMeta.attrs["energyOffset"]
         states = f.get("/states")
         for stateName in states:
